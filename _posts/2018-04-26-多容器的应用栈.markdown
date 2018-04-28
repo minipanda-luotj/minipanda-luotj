@@ -1,0 +1,39 @@
+---
+layout: post
+title:  "多容器的应用栈"
+date:   2018-04-24 20:56:08 +0800
+categories: docker
+---
+
+
+
+{% highlight ruby %}
+docker build -t luotj/redis .
+
+docker network create express
+
+docker run -d -h redis_primary --net express --name redis_primary luotj/redis_primary
+
+docker run -it --rm --volumes-from redis_primary ubuntu cat /var/log/redis/redis-server.log
+
+docker run -d -h redis_replica --name redis_replica1 --net express luotj/redis_replica
+
+docker run -d -h redis_replica --name redis_replica2 --net express luotj/redis_replica
+
+docker run -it --rm --volumes-from redis_replica1 ubuntu cat /var/log/redis/redis-replica.log
+
+docker run -it --rm --volumes-from redis_replica2 ubuntu cat /var/log/redis/redis-replica.log
+
+docker run -d --name nodeapp -p 3000:3000 --net express luotj/nodejs
+
+docker run -d --name logstash --volumes-from redis_primary --volumes-from nodeapp luotj/logstash
+
+docker logs -f logstash
+
+http://localhost:3000
+{% endhighlight %}
+
+
+[jekyll-docs]: https://jekyllrb.com/docs/home
+[jekyll-gh]:   https://github.com/jekyll/jekyll
+[jekyll-talk]: https://talk.jekyllrb.com/
